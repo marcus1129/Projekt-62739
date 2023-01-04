@@ -1,0 +1,130 @@
+tilstande: init, idle, DSP, recalibrate, display_update
+global char done_flag, buffer1[64], buffer2[64]
+
+init_display()
+{
+    opsætter registre
+    clear display
+}
+
+init_PWM()
+{
+    opsætter registre
+}
+
+init_ADC()
+{
+    opsætter registre
+    starter en sample
+}
+
+init_BTN()
+{
+    opsætter registre
+}
+
+int DFT(buffer1)
+{
+    regner dft
+}
+
+main(){
+    switch(state)
+    {
+        init:
+            init_display()
+            init_PWM()
+            init_ADC()
+            init_BTN()
+            
+            state = idle
+        break;
+
+        idle:
+            if(display_flag)
+            {
+                state = update_display;
+                sænk display_flag
+                break
+            }
+            
+            else if(BTN_flag)
+            {
+                state = recalibrate_phase;
+                sænk BTN_flag
+                break
+            }
+
+            else if(done_flag)
+            {
+                state = DSP;
+                sænk done_flag
+                break;
+            }
+        break;
+
+        DSP:
+            antialiasing();
+            DFT
+            update values: den nye værdi er den den gamle værdi gange 0.8 + den nye værdi gange 0.2
+
+            state = idle
+        break;
+
+        display_update:
+            clear OLED
+            OLED_print("phase: %phase \n amplitude: %amplitude")
+
+            state = idle
+        break;
+    }
+}
+
+#define BUFFER_FULL 0
+#define BUFFER_FREE 1
+char run_flag
+int count
+char status
+int limit
+
+
+ISR(sampling med 8Hz)
+{
+    if(run_flag == true)
+        start sampling
+    else
+    {
+        count++
+        if(count == limit)
+        {
+            count = 0
+            run_flag = true
+        }
+    }
+}
+
+ISR(sample ready)
+    gem sample
+    count++  
+
+    if(count == 64)
+    {
+        status = BUFFER_FULL
+        count = 0
+        done_flag = 1
+        run_flag = false
+    }
+}
+
+ISR(calibrate BTN)
+{
+    aktiver globalt interrupt
+    debounce
+    rasie BTN_flag
+}
+
+ISR(update display 30 Hz)
+{
+    aktiver globalt interrupt
+    raise display_flag
+}
