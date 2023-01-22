@@ -90,9 +90,8 @@ int main(void)
         break;
 
       case display_update:
-        true_phase = phase-offset_phase;  
         sendStrXY("amp:           \nphase:         ",0,0);
-        sprintf(text,"amp: %d \nphase: %d deg",amp,true_phase);
+        sprintf(text,"amp: %d \nphase: %d deg",amp,phase-offset_phase);
         sendStrXY(text,0,0);
         disp_count=0;
 
