@@ -1,0 +1,1 @@
+void init_timer3(int compareval);
